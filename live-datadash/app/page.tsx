@@ -33,8 +33,6 @@ export default function Home() {
         </div>
       </div>
 
-      <Greet />
-
       <div className="relative flex place-items-center before:absolute">
         <Image
           className="Big Playa"
