@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {invoke} from "@tauri-apps/api"
 
-export default function numberTest(){
+export default function NumberTest() {
     const [number, setNumber] = useState( ' 42 ' );
 
     useEffect(() => {

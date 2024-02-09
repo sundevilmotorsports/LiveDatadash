@@ -1,6 +1,7 @@
+'use client'
 import Image from "next/image";
 import Greet from './greet'
-import NumberTest from "./number";
+import NumberTest from "./Number";
 
 export default function Home() {
   return (
