@@ -28,19 +28,30 @@ fn number_test(number: &str) -> String{
 
 fn serial_test(){
   let ports = serialport::available_ports().expect("No ports found!");
-  let mut temp_port = String::from("COM6");
+  let mut port_vec = vec![];
+  
   for p in ports {
       println!("{}", p.port_name);
-      temp_port = p.port_name;
+      port_vec.push(p.port_name);
   }
-  println!("{}",temp_port);
-  //port.write_data_terminal_ready(true);
+  let mut temp_port = String::from("");
+  if port_vec.len() == 0 {
+    panic!("No ports");
+  } else if port_vec.len() == 1 {
+    temp_port = port_vec[0].to_string();
+    println!("len of port_vec is 1 {}", temp_port);
+    
+  } else {
+    temp_port = port_vec[1].to_string();
+    println!("len of port_vec is greater than 1: {}", temp_port);
+  }
+  
   let mut port = serialport::new(temp_port, 115200)
-    .timeout(Duration::from_secs(10))
-    .open()
+    .timeout(Duration::from_secs(1))
+    .open_native()
     .expect("Failed to open port");
-
+  //let _ = port.write_data_terminal_ready(true);
   let mut serial_buf: Vec<u8> = vec![0; 32];
-  port.read(serial_buf.as_mut_slice()).expect("Found no data!");
+  //port.read(serial_buf.as_mut_slice()).expect("Found no data!");
   println!("{:?}", serial_buf);
 }
