@@ -40,10 +40,10 @@ fn serial_test(){
   for p in ports {
       //not implemented, looks to determine how the port is connected and give user more info on which one to choose
       //Need a physical board to test
-      if(p.port_type == USBPort){
+      /*if p.port_type == USBPort {
         continue;
-      }
-      println!("[{}, {:?}]", p.port_name, p.port_type);
+      }*/
+      println!("{}", p.port_name);
       port_vec.push(p.port_name);
   }
 
@@ -80,7 +80,7 @@ fn serial_test(){
   let mut serial_buf: Vec<u8> = vec![0; 100];
 
   //Unsure if needed, implemented for debugging
-  //let mut cleared = port.clear(serialport::ClearBuffer::All);
+  let mut cleared = port.clear(serialport::ClearBuffer::All);
 
   let mut usable_data : Vec<Vec<i32>> = vec![];
 
@@ -98,7 +98,7 @@ fn serial_test(){
       usable_data.push(decode(serial_buf.to_vec()));
       ready = port.write_data_terminal_ready(true);
       
-      //cleared = port.clear(serialport::ClearBuffer::All);
+      cleared = port.clear(serialport::ClearBuffer::All);
     }
   });
 }
@@ -111,9 +111,11 @@ fn decode(buf : Vec<u8>) -> Vec<i32>{
   let mut new_index = true;
   let mut index = 0;
 
+  //println!("Innitaial buffer: {:?}", buf);
+
   for i in buf{
     //extra or is for testing without arduino, remove in final
-    if i as char == '\n' || i as char == '\\'{
+    if i as char == '\n' /*|| i as char == '\\'*/ {
       println!("final vec {:?}", data); 
       return data;
     } else if i as char == ' '{
