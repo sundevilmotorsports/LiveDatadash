@@ -13,15 +13,10 @@ fn main() {
   number_test("10");
   serial_test();
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![greet])
     .invoke_handler(tauri::generate_handler![number_test])
+    //.invoke_handler(tauri::generate_handler![serial_testing])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
-}
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-   format!("Hello, {}!", name)
 }
 
 #[tauri::command]
@@ -29,9 +24,13 @@ fn number_test(number: &str) -> String{
   format!("Testing {}", number)
 }
 
+/*#[tarui::command]
+fn serial_testing(vector: &Vec<i32>) -> String{
+  format!("Test vec {:?}", vector);
+}*/
 
 
-fn serial_test(){
+fn serial_test() -> Vec<i32>{
   let ports = serialport::available_ports().expect("No ports found!");
   let mut port_vec = vec![];
 
@@ -74,13 +73,13 @@ fn serial_test(){
     .open_native()
     .expect("Failed to open port");
 
-  let mut ready = port.write_data_terminal_ready(true);
+  let mut ready = true;
 
   //haven't calculated max length but in testing 50 chars was reached fairly quickly
   let mut serial_buf: Vec<u8> = vec![0; 100];
 
   //Unsure if needed, implemented for debugging
-  let mut cleared = port.clear(serialport::ClearBuffer::All);
+  //let mut cleared = port.clear(serialport::ClearBuffer::All);
 
   let mut usable_data : Vec<Vec<i32>> = vec![];
 
@@ -94,13 +93,17 @@ fn serial_test(){
 
       //Reads until buffer is full, if simulating padd at end of string after the \n
       port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-
       usable_data.push(decode(serial_buf.to_vec()));
       ready = port.write_data_terminal_ready(true);
-      
-      cleared = port.clear(serialport::ClearBuffer::All);
+      let temp = usable_data.pop().expect("No elements available");
+      return temp;
+      //println!("can we read this {:?}", temp);
+      //return temp;
+      //cleared = port.clear(serialport::ClearBuffer::All);
     }
   });
+  /*println!("returning outside vec {:?}", newtest);
+  return newtest;*/
 }
 
 fn decode(buf : Vec<u8>) -> Vec<i32>{
@@ -111,11 +114,34 @@ fn decode(buf : Vec<u8>) -> Vec<i32>{
   let mut new_index = true;
   let mut index = 0;
 
-  //println!("Innitaial buffer: {:?}", buf);
+  
+  // Real code
+   
+  /*for i in buf{
+    if i as char == '\n' {
+      println!("final vec {:?}", data); 
+      return data;
+    } else if i as char == ' '{
+      continue;
+    } else if i as char == ','{
+      new_index = true;
+      index += 1;
+    }else if i.is_ascii_digit() {
+      if new_index{
+        //If previous character was a comma, this is a new number and needs to be pushed
+        data.push((i - 48).into());
+        new_index = false;
+      } else {
+        //Increases previous number by a factor of ten and adds current value to it
+        data[index] = data[index] * 10 + <u8 as Into<i32>>::into(i - 48);
+      }
 
+    }
+  }*/
+
+  //for debugging without arduino
   for i in buf{
-    //extra or is for testing without arduino, remove in final
-    if i as char == '\n' /*|| i as char == '\\'*/ {
+    if i as char == '\\' {
       println!("final vec {:?}", data); 
       return data;
     } else if i as char == ' '{
