@@ -1,8 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-//use core::num;
+
 use std::time::Duration;
+use std::vec;
+use serialport::COMPort;
 use serialport::SerialPort;
+use serialport::SerialPortInfo;
 
 use std::thread;
 use std::io;
@@ -10,13 +13,35 @@ use std::io::Read;
 
 
 fn main() {
-  number_test("10");
-  serial_test();
-  tauri::Builder::default()
+  number_test("10"); 
+  let mut useable_data : &Vec<Vec<i32>> = &vec![];
+  threader(useable_data);
+  thread::spawn(|| {
+    println!("{:?}", useable_data);
+    let mut port = get_port();
+    let mut serial_buf: Vec<u8> = vec![0; 100];
+    println!("In thread");
+    let mut ready : Result<(), serialport::Error> = port.write_data_terminal_ready(true);
+    let mut temp : Vec<i32> = vec![];
+    while ready.is_ok(){
+      
+      //Uses ASCII Chars, 48-57 = 0-9, 44 = ',', EOL = 13 = carriage return (\n)
+      //convert to char with "_ as char"
+
+      //Reads until buffer is full, if simulating padd at end of string after the \n
+      port.read(serial_buf.as_mut_slice()).expect("Found no data!");
+      useable_data.push(decode(serial_buf.to_vec()));
+      ready = port.write_data_terminal_ready(false);
+      //println!("can we read this {:?}", temp);
+      //return temp;
+      //cleared = port.clear(serialport::ClearBuffer::All);
+    }
+  });
+  /*tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![number_test])
     //.invoke_handler(tauri::generate_handler![serial_testing])
     .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .expect("error while running tauri application");*/
 }
 
 #[tauri::command]
@@ -29,11 +54,9 @@ fn serial_testing(vector: &Vec<i32>) -> String{
   format!("Test vec {:?}", vector);
 }*/
 
-
-fn serial_test() -> Vec<i32>{
+fn get_port() -> COMPort {
   let ports = serialport::available_ports().expect("No ports found!");
   let mut port_vec = vec![];
-
   //Itterating though the available ports, printing then pushing them to port vector
   //  TODO: Could be possible to skip step and set port_vec equal to new serialport function
   for p in ports {
@@ -46,64 +69,40 @@ fn serial_test() -> Vec<i32>{
       port_vec.push(p.port_name);
   }
 
-  let mut temp_port = String::new();
+  let mut curr_port = String::new();
   
-  if port_vec.len() == 1 {
-    temp_port = port_vec[0].to_string();
-    println!("len of port_vec is 1, port is {}", temp_port);
+  if port_vec.len() == 0{
+    panic!("No ports are available");
+  }if port_vec.len() == 1 {
+    curr_port = port_vec[0].to_string();
+    println!("len of port_vec is 1, port is {}", curr_port);
     
   } else {
     //TODO: Prompt the user for what port to use 
     //implement serialport::SerialPortInfo.port_type or serialport::USBPortInfo (finding different info about ports to make it user friendly)
-    println!("{:?}", port_vec);
-    println!("{}", port_vec[0]);
+    println!("else {:?}", port_vec);
+    println!("portvec {}", port_vec[0]);
     println!("More than 1 port is populated, choose correct port");
     let mut input = String::new();
     let _ = io::stdin().read_line(&mut input);
     println!("");
     let chosen: usize = input.trim().parse().expect("Input not an integer");
-    temp_port = port_vec[chosen].to_string();
-    println!("Using port {}", temp_port);
+    curr_port = port_vec[chosen].to_string();
+    println!("Using port {}", curr_port);
   }
-  
+
   //opens serialport
   //TODO: needs to be tested on mac to see if open_native works
-  let mut port = serialport::new(temp_port, 115200)
+  
+  let mut port = serialport::new(curr_port, 115200)
     .timeout(Duration::from_secs(100))
     .open_native()
     .expect("Failed to open port");
+  return port;
+}
 
-  let mut ready = true;
+fn threader<'a>(address : &Vec<Vec<i32>>){
 
-  //haven't calculated max length but in testing 50 chars was reached fairly quickly
-  let mut serial_buf: Vec<u8> = vec![0; 100];
-
-  //Unsure if needed, implemented for debugging
-  //let mut cleared = port.clear(serialport::ClearBuffer::All);
-
-  let mut usable_data : Vec<Vec<i32>> = vec![];
-
-  
-  //Threads runs as long as it can read data and another part of the program is running
-  thread::spawn(move || {
-    while ready.is_ok() {
-
-      //Uses ASCII Chars, 48-57 = 0-9, 44 = ',', EOL = 13 = carriage return (\n)
-      //convert to char with "_ as char"
-
-      //Reads until buffer is full, if simulating padd at end of string after the \n
-      port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-      usable_data.push(decode(serial_buf.to_vec()));
-      ready = port.write_data_terminal_ready(true);
-      let temp = usable_data.pop().expect("No elements available");
-      return temp;
-      //println!("can we read this {:?}", temp);
-      //return temp;
-      //cleared = port.clear(serialport::ClearBuffer::All);
-    }
-  });
-  /*println!("returning outside vec {:?}", newtest);
-  return newtest;*/
 }
 
 fn decode(buf : Vec<u8>) -> Vec<i32>{
@@ -158,7 +157,6 @@ fn decode(buf : Vec<u8>) -> Vec<i32>{
         //Increases previous number by a factor of ten and adds current value to it
         data[index] = data[index] * 10 + <u8 as Into<i32>>::into(i - 48);
       }
-
     }
   }
   return data;
