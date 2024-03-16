@@ -16,17 +16,21 @@ use std::io::Read;
 
 type SerialBuf = Arc<Mutex<Vec<Vec<i32>>>>;
 
+
+
 fn main() {
   //setGreeting("10".to_string());
   let useable_data = Arc::new(Mutex::new(vec![vec![]]));
   let useable_data_1 = useable_data.clone();
-  thread::spawn(move || {
+  let mut i = 0;
+  let mut runner = thread::spawn(move || {
     let mut port = get_port();
     let mut serial_buf: Vec<u8> = vec![0; 100];
     let mut ready : Result<(), serialport::Error> = port.write_data_terminal_ready(true);
 
     while ready.is_ok(){
-      
+      i += 1;
+      println!("thread running {}", i);
       //Uses ASCII Chars, 48-57 = 0-9, 44 = ',', EOL = 13 = carriage return (\n)
       //convert to char with "_ as char"
 
@@ -42,8 +46,7 @@ fn main() {
 
   tauri::Builder::default()
     .manage(useable_data)
-    .invoke_handler(tauri::generate_handler![get_data])
-    //.invoke_handler(tauri::generate_handler![get_data])
+    .invoke_handler(tauri::generate_handler![get_data, set_number])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
@@ -52,16 +55,20 @@ fn main() {
 fn set_number(number : i32) -> i32{
   println!("Here");
   //format!("Testing {}", number)
-  return number;
+  return number + 10;
 }
 
 
 
 #[tauri::command]
-fn get_data(/*useable_data: State<SerialBuf>*/ testing : String) ->  Vec<Vec<i32>> {
-    println!("Inside vec");
-    return vec![vec![0;10]];
-    //useable_data.lock().unwrap().clone()
+fn get_data(useable_data: State<'_, SerialBuf>) -> String {
+    println!("Inside get_data");
+    join().
+    let guard = useable_data.lock().unwrap();
+    let curr_used = guard.clone();
+    println!("val of curr : {:?}", guard);
+    drop(guard);
+    format!("testing first num: {:?}", curr_used)
 }
 
 
