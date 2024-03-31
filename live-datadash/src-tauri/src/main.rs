@@ -63,8 +63,7 @@ fn set_number(number : i32) -> i32{
 #[tauri::command]
 fn get_data(useable_data: State<'_, SerialBuf>) -> String {
     println!("Inside get_data");
-    join().
-    let guard = useable_data.lock().unwrap();
+    let guard = useable_data.lock().unwrap().clone();
     let curr_used = guard.clone();
     println!("val of curr : {:?}", guard);
     drop(guard);
