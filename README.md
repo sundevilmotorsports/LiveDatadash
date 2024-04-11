@@ -3,7 +3,7 @@
 This template should help get you started developing with Tauri, React and Typescript in Vite.
 
 # Web testing
-1. Open http://localhost:3000/ in browser
+1. Open http://localhost:1420/ in browser (optional)
 2. Navigate to ./live-datadash in terminal
 3. Run 'npm run tarui dev'
 
