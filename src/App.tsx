@@ -6,6 +6,8 @@ import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 import { invokeTauriCommand } from "@tauri-apps/api/helpers/tauri";
 
+import GetPort from "./dropdown";
+
 function App() {
 const [greetMsg, setGreetMsg] = useState("");
 const [name, setName] = useState("");
@@ -60,11 +62,6 @@ function Serial(){
   type Payload = {
     connected: string;
   };
-
-  type LeanPort = {
-    port_name : String,
-    port_exists : boolean;
-  }
   
   async function startSerialEventListener() {
     await listen<Payload>("isConnected", (event : any) => {
@@ -78,14 +75,7 @@ function Serial(){
     startSerialEventListener();
   }, []);
 
-  async function get_ports(){
-    var option : Array<LeanPort> = await invoke("get_ports")
-    for(var i = 0; i < option.length; i++){
-      if(!inDrop(option[i].port_name)){
-        document.getElementById('dropper')?.append(new Option(option[i].port_name.toString()))
-      }
-    }
-  }
+  
 
   function inDrop(port : String) {
     for(var i in document.getElementById('dropper')?.childNodes.values()){
@@ -103,9 +93,8 @@ function Serial(){
         <a href = "https://github.com/KadenGreen" target = "_blank">
           <img src= {kaden} className="logo kaden" alt = "goat (?)"></img>
         </a>
-        <select name = "ports" onLoad={get_ports} onClick={get_ports} id = 'dropper'>test
-        </select>
       </div>
+      <GetPort />
     </div>
   )
 }
