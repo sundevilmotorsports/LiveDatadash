@@ -58,6 +58,7 @@ async function greet() {
 function Serial(){
 
   const [isConnected, setIsConnected] = useState(false);
+  const[chart,setChart] = useState(String);
 
   type Payload = {
     connected: string;
@@ -86,6 +87,11 @@ function Serial(){
     return false;
    }
 
+  async function get_chart(){
+    setChart(await invoke("get_chart"));
+    return chart
+  }
+
   return(
     <div className= "container">
       <h1> WE CLOWN IT UP IN DAQ </h1>
@@ -93,6 +99,9 @@ function Serial(){
         <a href = "https://github.com/KadenGreen" target = "_blank">
           <img src= {kaden} className="logo kaden" alt = "goat (?)"></img>
         </a>
+      </div>
+      {chart.substring(chart.indexOf("</head>") + 8)}
+      <div onLoad={get_chart} onClick={get_chart}> we are loading rn
       </div>
       <GetPort />
     </div>

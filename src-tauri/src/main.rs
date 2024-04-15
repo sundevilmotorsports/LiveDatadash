@@ -14,6 +14,10 @@ use serialport::{
     UsbPortInfo,
     Error
 };
+use charming::{
+    component::{Axis, Legend}, element::{AxisType, ItemStyle}, renderer::{self, HtmlRenderer}, series::{Line, Pie, PieRoseType}, Chart
+};
+
 use std::thread;
 use tauri::Manager;
 
@@ -63,6 +67,23 @@ async fn app_handle(app: tauri::AppHandle) -> bool{
 }
 
 #[tauri::command]
+async fn get_chart() -> String{
+    let chart = Chart::new()
+        .x_axis(
+            Axis::new()
+                .type_(AxisType::Category)
+                .data(vec!["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]),
+        )
+        .y_axis(Axis::new().type_(AxisType::Value))
+        .series(Line::new().data(vec![150, 230, 224, 218, 135, 147, 260])
+    );
+
+    let mut renderer = renderer::HtmlRenderer::new("testing", 800, 800);
+    println!("rendered");
+    return renderer.render(&chart).unwrap();
+}
+
+#[tauri::command]
 async fn update_port(name : String){
     //let temp : Mutex<String> = Mutex::new(name);
     println!("inside update_port {}", name);
@@ -89,8 +110,12 @@ pub fn start_thread(app : tauri::AppHandle){
 
 fn main() {
     println!("begin main");
+    
+    //let temp = renderer.save(&chart, "C:/Users/kaden/Desktop/temp/SAE/temp.html");
+    //println!("saved {:?}", temp.err());
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_ports, app_handle, update_port])
+        .invoke_handler(tauri::generate_handler![get_ports, app_handle, update_port, get_chart])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
