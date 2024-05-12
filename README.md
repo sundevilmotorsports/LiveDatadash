@@ -4,7 +4,7 @@ Viewing live data in style
 
 # Web testing
 1. Open http://localhost:3000/ in browser
-2. Navigate to ./live-datadash in terminal
+2. Navigate to ./Vite_Fronted in terminal
 3. Run 'npm run dev'
 Changes will be made as soon as files are saved
 
