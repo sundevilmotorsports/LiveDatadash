@@ -37,12 +37,14 @@ fn main() {
   //         sleep(Duration::from_millis(50));
   //     }
   // });
-  // loop {
-  // }
-  let query = "
-    INSERT INTO imu VALUES (1, 0, 0, 0, 0, 0, 0, 0);
-  ";
-  connection.execute(query).unwrap();
+  let mut i = 0;
+  loop {
+    // let query = format!("
+    //   INSERT INTO imu VALUES (1, {}, 0, 0, 0, 0, 0, 0);
+    // ", i);
+    // i += 1;
+    // connection.execute(query).unwrap();
+  }
   
 }
 
