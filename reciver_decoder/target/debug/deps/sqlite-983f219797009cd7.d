@@ -1,0 +1,12 @@
+E:\SAE\LiveDatadash\reciver_decoder\target\debug\deps\libsqlite-983f219797009cd7.rmeta: C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\lib.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\error.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\value.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\connection.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\cursor.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\statement.rs
+
+E:\SAE\LiveDatadash\reciver_decoder\target\debug\deps\libsqlite-983f219797009cd7.rlib: C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\lib.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\error.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\value.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\connection.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\cursor.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\statement.rs
+
+E:\SAE\LiveDatadash\reciver_decoder\target\debug\deps\sqlite-983f219797009cd7.d: C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\lib.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\error.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\value.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\connection.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\cursor.rs C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\statement.rs
+
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\lib.rs:
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\error.rs:
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\value.rs:
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\connection.rs:
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\cursor.rs:
+C:\Users\K\.cargo\registry\src\index.crates.io-6f17d22bba15001f\sqlite-0.36.0\src\statement.rs:

@@ -15,22 +15,35 @@ use std::io::Read;
 
 
 fn main() {
-    let mut data : Vec<i32> = vec![];
-    let mut serial_buf: Vec<u8> = vec![0; 100];
-    let mut port : COMPort = get_port();
-    println!("port: {:?}", port.name());
-    thread::spawn(move || {
-        port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-        println!("port val: {:?}", port);
-        println!("{:?}",serial_buf.to_ascii_lowercase());
-        loop {
-            port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-            data = decode(serial_buf.clone());
-            sleep(Duration::from_millis(50));
-        }
-    });
-    loop {
-    }
+  let connection = sqlite::open("../server/ldd.db").unwrap();
+  let init = "
+    delete from imu;
+    delete from wheel;
+    delete from datalog;
+    delete from ack;
+  ";
+  connection.execute(init).unwrap();
+  // let mut data : Vec<i32> = vec![];
+  // let mut serial_buf: Vec<u8> = vec![0; 100];
+  // let mut port : COMPort = get_port();
+  // println!("port: {:?}", port.name());
+  // thread::spawn(move || {
+  //     port.read(serial_buf.as_mut_slice()).expect("Found no data!");
+  //     println!("port val: {:?}", port);
+  //     println!("{:?}",serial_buf.to_ascii_lowercase());
+  //     loop {
+  //         port.read(serial_buf.as_mut_slice()).expect("Found no data!");
+  //         data = decode(serial_buf.clone());
+  //         sleep(Duration::from_millis(50));
+  //     }
+  // });
+  // loop {
+  // }
+  let query = "
+    INSERT INTO imu VALUES (1, 0, 0, 0, 0, 0, 0, 0);
+  ";
+  connection.execute(query).unwrap();
+  
 }
 
 // fn set_number(number : i32) -> i32{
