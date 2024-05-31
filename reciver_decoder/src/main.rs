@@ -1,5 +1,7 @@
+use std::cmp::max;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::thread::sleep;
 // use std::thread::sleep;
 // use std::thread::spawn;
 use std::time::Duration;
@@ -27,8 +29,8 @@ fn main() {
   ";
   connection.execute(init).unwrap();
 
-  let data : Arc<Mutex<Vec<i32>>> = Arc::new(Mutex::new(vec![].into()));
-  let mut serial_buf: Vec<u8> = vec![0; 77];
+  //let data : Arc<Mutex<Vec<i32>>> = Arc::new(Mutex::new(vec![].into()));
+  let mut serial_buf: Vec<u8> = vec![0; 1000];
   let port_result : Result<serialport::COMPort, Error> = get_port();
   let mut port : serialport::COMPort;
 
@@ -39,13 +41,19 @@ fn main() {
   }
   println!("port val: {:?}", port);
   println!("entering loop");
+  while port.bytes_to_read().unwrap() <= 21{
+    println!("waiting for data: {:?}", port.bytes_to_read().unwrap());
+  };
   loop {
-    println!("step 1");
-    let read : Result<usize, io::Error> = port.read(&mut serial_buf);
-    if read.is_ok() {
-      println!("data val: {serial_buf:?}");
-    } else {
-      println!("error: {:?}", read.err())
+    if port.bytes_to_read().unwrap() > 21{
+      let read : Result<usize, io::Error> = port.read(&mut serial_buf);
+      if read.is_ok() {
+        let temp = decode(serial_buf.clone());
+        println!("temp val: {:?}", temp);
+        //println!("data val: {serial_buf:?}");
+      } else {
+        println!("error: {:?}", read.err())
+      }
     }
   }
 }
@@ -101,33 +109,38 @@ fn recconnect(portname : String) -> Box<Result<Box<dyn SerialPort>, Error>> {
   Box::new(serialport::new(portname, BAUD).timeout(Duration::from_millis(TIMEOUT)).open())
 }
 
-
-fn decode(buf : Vec<u8>) -> Vec<i32>{
-  let mut data: Vec<i32> = vec![];
-
-  //tells program to increment index if i is a comma or space
-  let mut new_index = true;
-  let mut index = 0;
+fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
+  let mut final_vec : Vec<Vec<f32>> = vec![vec![]; 4];
+  let mut vec_index: usize = 0;
+  let mut index: usize = 0;
+  let mut decimal: bool = false;
+  let mut decimal_counter = 0;
   for i in buf{
-    if i as char == '\n' {
-      println!("final vec {:?}", data); 
-      return data;
-    } else if i as char == ' '{
-      continue;
-    } else if i as char == ','{
-      new_index = true;
-      index += 1;
-    }else if i.is_ascii_digit() {
-      if new_index{
-        //If previous character was a comma, this is a new number and needs to be pushed
-        data.push((i - 48).into());
-        new_index = false;
-      } else {
-        //Increases previous number by a factor of ten and adds current value to it
-        data[index] = data[index] * 10 + <u8 as Into<i32>>::into(i - 48);
-      }
+    if i as char == '\n'{
+      index = 0;
+      decimal = false;
+      decimal_counter = 0;
 
+      vec_index += 1;
+      if vec_index == 4{
+        return final_vec;
+      }
+    } else if i as char == '.' {
+        decimal = true;
+    }  else if i as char == ',' {
+        final_vec[vec_index][index] /= max(1, decimal_counter * 10) as f32;
+        final_vec[vec_index].push(0.0);
+        index += 1;
+    }else if i.is_ascii_digit() {
+      if(decimal){
+        decimal_counter += 1;
+      }
+      if final_vec[vec_index].len() == 0{
+        final_vec[vec_index].push((i-48).into());
+      } else {
+        final_vec[vec_index][index] = final_vec[vec_index][index] * 10.0 + (i as f32 - 48.0);
+      }
     }
   }
-  return data;
+  return final_vec;
 }
