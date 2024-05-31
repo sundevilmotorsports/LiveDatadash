@@ -1,17 +1,10 @@
 use std::cmp::max;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::thread::sleep;
-// use std::thread::sleep;
-// use std::thread::spawn;
 use std::time::Duration;
 use std::vec;
 use serialport::Error;
 use serialport::SerialPort;
 use serialport::SerialPortInfo;
 use serialport::SerialPortType;
-use serialport::UsbPortInfo;
-use sqlite::Connection;
 
 use std::io;
 use std::io::Read;
@@ -68,20 +61,12 @@ fn main() {
           let datalog : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO datalog VALUES (3, {}, {}, {}, {}, {}, {}, {},{}, {}, {});", temp[2][1], temp[2][2], temp[2][3], temp[2][4], temp[2][5], temp[2][6], temp[2][7], temp[2][8], temp[2][9], temp[2][10]));
           print!("imu packet sent: {}", datalog.is_ok());
         }
-        //println!("temp val: {:?}", temp);
-        //println!("data val: {serial_buf:?}");
+          println!("buffer value: {serial_buf:?}");
       } else {
         println!("error: {:?}", read.err())
       }
     }
   }
-}
-
-fn sendpkt(){
-  // let query = format!("
-  //   INSERT INTO imu VALUES (1, {}, 0, 0, 0, 0, 0, 0);
-  // ", i);
-  // connection.execute(query).unwrap();
 }
 
 fn get_port() -> Result<serialport::COMPort, Error>{
@@ -115,7 +100,7 @@ fn get_port() -> Result<serialport::COMPort, Error>{
 
   //opens serialport
   //TODO: needs to be tested on mac to see if open_native works
-  
+    //needs flow control or can't read COM port, idk why :)
   let port : Result<serialport::COMPort, Error>  = serialport::new(curr_port.port_name, BAUD)
   .timeout(Duration::from_millis(TIMEOUT))
   .flow_control(serialport::FlowControl::Hardware)
@@ -123,9 +108,10 @@ fn get_port() -> Result<serialport::COMPort, Error>{
   return port;
 }
 
-fn recconnect(portname : String) -> Box<Result<Box<dyn SerialPort>, Error>> {
-  Box::new(serialport::new(portname, BAUD).timeout(Duration::from_millis(TIMEOUT)).open())
-}
+  //TODO: Implement
+// fn recconnect(portname : String) -> Box<Result<Box<dyn SerialPort>, Error>> {
+//   Box::new(serialport::new(portname, BAUD).timeout(Duration::from_millis(TIMEOUT)).open())
+// }
 
 fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
   let mut final_vec : Vec<Vec<f32>> = vec![vec![]; PACKET_COUNT];
@@ -133,6 +119,7 @@ fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
   let mut index: usize = 0;
   let mut decimal: bool = false;
   let mut decimal_counter = 0;
+  
   for i in buf{
     if i as char == '\n'{
       index = 0;
@@ -150,7 +137,7 @@ fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
         final_vec[vec_index].push(0.0);
         index += 1;
     }else if i.is_ascii_digit() {
-      if(decimal){
+      if decimal{
         decimal_counter += 1;
       }
       if final_vec[vec_index].len() == 0{
