@@ -29,19 +29,21 @@ fn main() {
 
   let data : Arc<Mutex<Vec<i32>>> = Arc::new(Mutex::new(vec![].into()));
   let mut serial_buf: Vec<u8> = vec![0; 77];
-  let mut port : Box<dyn SerialPort> = get_port().unwrap();
+  let port_result : Result<serialport::COMPort, Error> = get_port();
+  let mut port : serialport::COMPort;
 
+  if port_result.is_ok(){
+    port = port_result.unwrap();
+  } else {
+    panic!("could not connect to port: {:?}", port_result.err());
+  }
   println!("port val: {:?}", port);
-  //println!("{:?}",serial_buf.to_ascii_lowercase());
   println!("entering loop");
   loop {
     println!("step 1");
     let read : Result<usize, io::Error> = port.read(&mut serial_buf);
     if read.is_ok() {
-      let mut data = data.lock().unwrap();
-      *data = decode(serial_buf.clone());
-      sendpkt();
-      println!("data val: {data:?}");
+      println!("data val: {serial_buf:?}");
     } else {
       println!("error: {:?}", read.err())
     }
@@ -56,7 +58,7 @@ fn sendpkt(){
   // connection.execute(query).unwrap();
 }
 
-fn get_port() -> Result<Box<dyn SerialPort>, Error>{
+fn get_port() -> Result<serialport::COMPort, Error>{
   
   let curr_port : SerialPortInfo;
   let mut ports : Vec<SerialPortInfo> = vec![];
@@ -88,9 +90,10 @@ fn get_port() -> Result<Box<dyn SerialPort>, Error>{
   //opens serialport
   //TODO: needs to be tested on mac to see if open_native works
   
-  let port: Result<Box<dyn SerialPort>, Error> = serialport::new(curr_port.port_name, BAUD)
+  let port : Result<serialport::COMPort, Error>  = serialport::new(curr_port.port_name, BAUD)
   .timeout(Duration::from_millis(TIMEOUT))
-  .open();
+  .flow_control(serialport::FlowControl::Hardware)
+  .open_native();
   return port;
 }
 
