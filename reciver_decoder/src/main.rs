@@ -1,17 +1,20 @@
-use std::thread::sleep;
-use std::thread::spawn;
+use std::sync::Arc;
+use std::sync::Mutex;
+// use std::thread::sleep;
+// use std::thread::spawn;
 use std::time::Duration;
 use std::vec;
-use serialport::COMPort;
+use serialport::Error;
 use serialport::SerialPort;
 use serialport::SerialPortInfo;
 use serialport::SerialPortType;
+use serialport::UsbPortInfo;
 
-
-use std::thread;
 use std::io;
 use std::io::Read;
 
+const BAUD : u32 = 9600;
+const TIMEOUT : u64 = 1000;
 
 
 fn main() {
@@ -23,48 +26,38 @@ fn main() {
     delete from ack;
   ";
   connection.execute(init).unwrap();
-  // let mut data : Vec<i32> = vec![];
-  // let mut serial_buf: Vec<u8> = vec![0; 100];
-  // let mut port : COMPort = get_port();
-  // println!("port: {:?}", port.name());
-  // thread::spawn(move || {
-  //     port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-  //     println!("port val: {:?}", port);
-  //     println!("{:?}",serial_buf.to_ascii_lowercase());
-  //     loop {
-  //         port.read(serial_buf.as_mut_slice()).expect("Found no data!");
-  //         data = decode(serial_buf.clone());
-  //         sleep(Duration::from_millis(50));
-  //     }
-  // });
-  let mut i = 0;
+
+  let data : Arc<Mutex<Vec<i32>>> = Arc::new(Mutex::new(vec![].into()));
+  let mut serial_buf: Vec<u8> = vec![0; 77];
+  let mut port : Box<dyn SerialPort> = get_port().unwrap();
+
+  println!("port val: {:?}", port);
+  //println!("{:?}",serial_buf.to_ascii_lowercase());
+  println!("entering loop");
   loop {
-    // let query = format!("
-    //   INSERT INTO imu VALUES (1, {}, 0, 0, 0, 0, 0, 0);
-    // ", i);
-    // i += 1;
-    // connection.execute(query).unwrap();
+    println!("step 1");
+    let read : Result<usize, io::Error> = port.read(&mut serial_buf);
+    if read.is_ok() {
+      let mut data = data.lock().unwrap();
+      *data = decode(serial_buf.clone());
+      sendpkt();
+      println!("data val: {data:?}");
+    } else {
+      println!("error: {:?}", read.err())
+    }
   }
-  
 }
 
-// fn set_number(number : i32) -> i32{
-  //   println!("Here");
-  //   //format!("Testing {}", number)
-  //   return number + 10;
-  // }
-  
-// #[tauri::command]
-// async fn get_data(app: &App){
-//   println!("Inside get_data");
-  
-  
-// }
+fn sendpkt(){
+  // let query = format!("
+  //   INSERT INTO imu VALUES (1, {}, 0, 0, 0, 0, 0, 0);
+  // ", i);
+  // i += 1;
+  // connection.execute(query).unwrap();
+}
 
-
-fn get_port() -> COMPort {
-
-  //println!("{:?}", ports);
+fn get_port() -> Result<Box<dyn SerialPort>, Error>{
+  
   let curr_port : SerialPortInfo;
   let mut ports : Vec<SerialPortInfo> = vec![];
   let mut port_names : Vec<String> = vec![];
@@ -95,12 +88,16 @@ fn get_port() -> COMPort {
   //opens serialport
   //TODO: needs to be tested on mac to see if open_native works
   
-  let port = serialport::new(curr_port.port_name, 115200)
-    .timeout(Duration::from_secs(30))
-    .open_native()
-    .expect("Failed to open port");
+  let port: Result<Box<dyn SerialPort>, Error> = serialport::new(curr_port.port_name, BAUD)
+  .timeout(Duration::from_millis(TIMEOUT))
+  .open();
   return port;
 }
+
+fn recconnect(portname : String) -> Box<Result<Box<dyn SerialPort>, Error>> {
+  Box::new(serialport::new(portname, BAUD).timeout(Duration::from_millis(TIMEOUT)).open())
+}
+
 
 fn decode(buf : Vec<u8>) -> Vec<i32>{
   let mut data: Vec<i32> = vec![];
