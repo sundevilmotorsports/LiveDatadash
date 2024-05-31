@@ -11,13 +11,14 @@ use serialport::SerialPort;
 use serialport::SerialPortInfo;
 use serialport::SerialPortType;
 use serialport::UsbPortInfo;
+use sqlite::Connection;
 
 use std::io;
 use std::io::Read;
 
 const BAUD : u32 = 9600;
 const TIMEOUT : u64 = 1000;
-
+const PACKET_COUNT : usize = 3;
 
 fn main() {
   let connection = sqlite::open("../server/ldd.db").unwrap();
@@ -29,7 +30,7 @@ fn main() {
   ";
   connection.execute(init).unwrap();
 
-  //let data : Arc<Mutex<Vec<i32>>> = Arc::new(Mutex::new(vec![].into()));
+  let mut prev : Vec<Vec<f32>> = vec![vec![0.0;5]; PACKET_COUNT];
   let mut serial_buf: Vec<u8> = vec![0; 1000];
   let port_result : Result<serialport::COMPort, Error> = get_port();
   let mut port : serialport::COMPort;
@@ -41,15 +42,33 @@ fn main() {
   }
   println!("port val: {:?}", port);
   println!("entering loop");
-  while port.bytes_to_read().unwrap() <= 21{
+  while port.bytes_to_read().unwrap() == 0{
     println!("waiting for data: {:?}", port.bytes_to_read().unwrap());
   };
   loop {
     if port.bytes_to_read().unwrap() > 21{
+      println!("reading");
       let read : Result<usize, io::Error> = port.read(&mut serial_buf);
+      println!("past read");
       if read.is_ok() {
-        let temp = decode(serial_buf.clone());
-        println!("temp val: {:?}", temp);
+        let temp: Vec<Vec<f32>> = decode(serial_buf.clone());
+        println!("past decode");
+        if temp[0][1] != prev[0][1]{
+          prev[0] = temp[0].clone();
+          let imu : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO imu VALUES (1, {}, {}, {}, {}, {}, {}, {});", temp[0][1], temp[0][2], temp[0][3], temp[0][4], temp[0][5], temp[0][6], temp[0][7]));
+          print!("imu packet sent: {}", imu.is_ok());
+        } 
+        if temp[1][1] != prev[1][1]{
+          prev[1] = temp[1].clone();
+          let wheel : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO wheel VALUES (2, {}, {}, {}, {}, {}, {}, {},{}, {}, {}, {}, {}, {});", temp[1][1], temp[1][2], temp[1][3], temp[1][4], temp[1][5], temp[1][6], temp[1][7], temp[1][8], temp[1][9], temp[1][10], temp[1][11], temp[1][12], temp[1][13]));
+          print!("imu packet sent: {}", wheel.is_ok());
+        }
+        if temp[2][1] != prev[2][1]{
+          prev[2] = temp[2].clone();
+          let datalog : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO datalog VALUES (3, {}, {}, {}, {}, {}, {}, {},{}, {}, {});", temp[2][1], temp[2][2], temp[2][3], temp[2][4], temp[2][5], temp[2][6], temp[2][7], temp[2][8], temp[2][9], temp[2][10]));
+          print!("imu packet sent: {}", datalog.is_ok());
+        }
+        //println!("temp val: {:?}", temp);
         //println!("data val: {serial_buf:?}");
       } else {
         println!("error: {:?}", read.err())
@@ -62,7 +81,6 @@ fn sendpkt(){
   // let query = format!("
   //   INSERT INTO imu VALUES (1, {}, 0, 0, 0, 0, 0, 0);
   // ", i);
-  // i += 1;
   // connection.execute(query).unwrap();
 }
 
@@ -110,7 +128,7 @@ fn recconnect(portname : String) -> Box<Result<Box<dyn SerialPort>, Error>> {
 }
 
 fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
-  let mut final_vec : Vec<Vec<f32>> = vec![vec![]; 4];
+  let mut final_vec : Vec<Vec<f32>> = vec![vec![]; PACKET_COUNT];
   let mut vec_index: usize = 0;
   let mut index: usize = 0;
   let mut decimal: bool = false;
@@ -122,8 +140,8 @@ fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
       decimal_counter = 0;
 
       vec_index += 1;
-      if vec_index == 4{
-        return final_vec;
+      if vec_index == PACKET_COUNT{
+        break;
       }
     } else if i as char == '.' {
         decimal = true;
