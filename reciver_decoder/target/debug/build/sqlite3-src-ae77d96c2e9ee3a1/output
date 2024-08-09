@@ -77,4 +77,4 @@ HOST_ARFLAGS = None
 cargo:rerun-if-env-changed=ARFLAGS
 ARFLAGS = None
 cargo:rustc-link-lib=static=sqlite3
-cargo:rustc-link-search=native=E:\SAE\LiveDatadash\reciver_decoder\target\debug\build\sqlite3-src-ae77d96c2e9ee3a1\out
+cargo:rustc-link-search=native=C:\Users\ryans\Documents\FormulaSAE\LiveDataDash\LiveDatadash\reciver_decoder\target\debug\build\sqlite3-src-ae77d96c2e9ee3a1\out
