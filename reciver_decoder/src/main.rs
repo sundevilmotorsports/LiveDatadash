@@ -15,7 +15,7 @@ const PACKET_COUNT : usize = 3;
 const TESTING : bool = false;
 
 fn main() {
-  let connection = sqlite::open("../server/ldd.db").unwrap();
+  let connection = sqlite::open("../../server/ldd.db").unwrap();
   let init = "
         DROP TABLE IF EXISTS imu;
         DROP TABLE IF EXISTS wheel;
@@ -122,7 +122,7 @@ fn write_db(payload: Vec<Vec<f32>>, mut prev : Vec<Vec<f32>>, connection : &sqli
     prev[0] = payload[0].clone();
     let imu : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO imu VALUES (1, {}, {}, {}, {}, {}, {}, {});", payload[0][1], payload[0][2], payload[0][3], payload[0][4], payload[0][5], payload[0][6], payload[0][7]));
     if imu.is_ok(){
-      print!("imu packet sent,\t");
+      print!("imu packet recived,\t");
     } else {
       print!("imu packet err: {:?},\t", imu.err().unwrap().to_string());
     }
@@ -131,7 +131,7 @@ fn write_db(payload: Vec<Vec<f32>>, mut prev : Vec<Vec<f32>>, connection : &sqli
     prev[1] = payload[1].clone();
     let wheel : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO wheel VALUES (2, {}, {}, {}, {}, {}, {}, {},{}, {}, {}, {}, {}, {});", payload[1][1], payload[1][2], payload[1][3], payload[1][4], payload[1][5], payload[1][6], payload[1][7], payload[1][8], payload[1][9], payload[1][10], payload[1][11], payload[1][12], payload[1][13]));
     if wheel.is_ok() {
-      print!("wheel packet sent,\t");
+      print!("wheel packet recived,\t");
     } else {
       print!("wheel packet err: {:?},\t", wheel.err().unwrap().to_string());
     }
@@ -140,7 +140,7 @@ fn write_db(payload: Vec<Vec<f32>>, mut prev : Vec<Vec<f32>>, connection : &sqli
     prev[2] = payload[2].clone();
     let datalog : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO datalog VALUES (3, {}, {}, {}, {}, {}, {}, {},{}, {}, {});", payload[2][1], payload[2][2], payload[2][3], payload[2][4], payload[2][5], payload[2][6], payload[2][7], payload[2][8], payload[2][9], payload[2][10]));
     if datalog.is_ok(){
-      println!("datalog packet sent ");
+      println!("datalog packet recived");
     } else {
       println!("datalog err: {:?} ", datalog.err().unwrap().to_string());
     }
@@ -210,32 +210,42 @@ fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
   let mut vec_index: usize = 0;
   let mut index: usize = 0;
   let mut decimal: bool = false;
-  let mut decimal_counter = 0;
-  
+  let mut negitive: bool = false;
+  let mut decimal_counter: u32 = 0;
+  //println!("{:?}", buf);
   for i in buf{
     if i as char == '\n'{
       index = 0;
       decimal = false;
+      negitive = false;
       decimal_counter = 0;
 
       vec_index += 1;
       if vec_index == PACKET_COUNT{
         break;
       }
+    } else if i as char == '-'{
+        negitive = true;
     } else if i as char == '.' {
         decimal = true;
     }  else if i as char == ',' {
-        final_vec[vec_index][index] /= max(1, decimal_counter * 10) as f32;
+        final_vec[vec_index][index] /= (10 as i32).pow(decimal_counter) as f32;
+        if negitive{
+          final_vec[vec_index][index] *= -1.0;
+        }
+        decimal = false;
+        decimal_counter = 0;
+        negitive = false;
         final_vec[vec_index].push(0.0);
         index += 1;
-    }else if i.is_ascii_digit() {
+    } else if i.is_ascii_digit() {
       if decimal{
         decimal_counter += 1;
       }
       if final_vec[vec_index].len() == 0{
         final_vec[vec_index].push((i-48).into());
       } else {
-        final_vec[vec_index][index] = final_vec[vec_index][index] * 10.0 + (i as f32 - 48.0);
+        final_vec[vec_index][index] = final_vec[vec_index][index] * 10.0 + (i - 48) as f32;
       }
     }
   }
