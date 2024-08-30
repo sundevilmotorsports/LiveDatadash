@@ -1,0 +1,10 @@
+C:\VSCode\SAE\LiveDatadash\reciver_decoder\target\debug\deps\libserialport-505d856f4683d193.rmeta: C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\lib.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\mod.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\com.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\dcb.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\enumerate.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\error.rs
+
+C:\VSCode\SAE\LiveDatadash\reciver_decoder\target\debug\deps\serialport-505d856f4683d193.d: C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\lib.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\mod.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\com.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\dcb.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\enumerate.rs C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\error.rs
+
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\lib.rs:
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\mod.rs:
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\com.rs:
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\dcb.rs:
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\enumerate.rs:
+C:\Users\kaden\.cargo\registry\src\index.crates.io-6f17d22bba15001f\serialport-4.3.0\src\windows\error.rs:

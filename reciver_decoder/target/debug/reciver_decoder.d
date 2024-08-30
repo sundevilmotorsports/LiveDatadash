@@ -1,1 +1,1 @@
-C:\Users\ryans\Documents\FormulaSAE\LiveDataDash\LiveDatadash\reciver_decoder\target\debug\reciver_decoder.exe: C:\Users\ryans\Documents\FormulaSAE\LiveDataDash\LiveDatadash\reciver_decoder\src\main.rs
+C:\VSCode\SAE\LiveDatadash\reciver_decoder\target\debug\reciver_decoder.exe: C:\VSCode\SAE\LiveDatadash\reciver_decoder\src\main.rs

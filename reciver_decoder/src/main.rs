@@ -1,7 +1,5 @@
-use std::cmp::max;
 use std::time::Duration;
 use std::vec;
-use serialport::SerialPort;
 use serialport::SerialPortInfo;
 use serialport::SerialPortType;
 use rand::Rng;
@@ -11,11 +9,12 @@ use std::io;
 use std::io::Read;
 
 const BAUD : u32 = 9600;
-const TIMEOUT : u64 = 1000;
+const TIMEOUT : u64 = 2500;
 const PACKET_COUNT : usize = 3;
+const TESTING : bool = false;
 
 fn main() {
-  let connection = sqlite::open("../server/ldd.db").unwrap();
+  let connection = sqlite::open("../../server/ldd.db").unwrap();
   let init = "
         DROP TABLE IF EXISTS imu;
         DROP TABLE IF EXISTS wheel;
@@ -23,50 +22,50 @@ fn main() {
         DROP TABLE IF EXISTS ack;
 
         CREATE TABLE imu(
-            id, 
-            timestamp,
-            x_acceleration, 
-            y_acceleration, 
-            z_acceleration, 
-            x_gyro, 
-            y_gyro, 
-            z_gyro
+            id INTEGER NOT NULL, 
+            timestamp INTEGER NOT NULL PRIMARY KEY,
+            x_acceleration INTEGER NOT NULL, 
+            y_acceleration INTEGER NOT NULL, 
+            z_acceleration INTEGER NOT NULL, 
+            x_gyro INTEGER NOT NULL, 
+            y_gyro INTEGER NOT NULL, 
+            z_gyro INTEGER NOT NULL
         );
 
         CREATE TABLE wheel(
-            id, 
-            timestamp, 
-            fl_wheel_speed, 
-            fl_brake_temp, 
-            fl_ambiant_temp,
-            fr_wheel_speed, 
-            fr_brake_temp, 
-            fr_ambiant_temp,
-            rl_wheel_speed, 
-            rl_brake_temp, 
-            rl_ambiant_temp,
-            rr_wheel_speed, 
-            rr_brake_temp, 
-            rr_ambiant_temp
+            id INTEGER NOT NULL, 
+            timestamp INTEGER NOT NULL PRIMARY KEY, 
+            fl_wheel_speed INTEGER NOT NULL, 
+            fl_brake_temp REAL NOT NULL, 
+            fl_ambiant_temp REAL NOT NULL,
+            fr_wheel_speed INTEGER NOT NULL, 
+            fr_brake_temp REAL NOT NULL, 
+            fr_ambiant_temp REAL NOT NULL,
+            rl_wheel_speed INTEGER NOT NULL, 
+            rl_brake_temp REAL NOT NULL, 
+            rl_ambiant_temp REAL NOT NULL,
+            rr_wheel_speed INTEGER NOT NULL, 
+            rr_brake_temp REAL NOT NULL, 
+            rr_ambiant_temp REAL NOT NULL
         );
 
         CREATE TABLE datalog(
-            id INTEGER, 
-            timestamp,
-            drs, 
-            steering_angle, 
-            throttle_input,
-            front_brake_pressure, 
-            rear_brake_pressure,
-            gps_lattitude, 
-            gps_longitude, 
-            battery_voltage, 
-            daq_current_draw
+            id INTEGER NOT NULL, 
+            timestamp INTEGER NOT NULL PRIMARY KEY,
+            drs INTEGER NOT NULL, 
+            steering_angle INTEGER NOT NULL, 
+            throttle_input REAL NOT NULL,
+            front_brake_pressure REAL NOT NULL, 
+            rear_brake_pressure REAL NOT NULL,
+            gps_lattitude REAL NOT NULL, 
+            gps_longitude REAL NOT NULL, 
+            battery_voltage REAL NOT NULL, 
+            daq_current_draw REAL NOT NULL
         );
 
         CREATE TABLE ack(
-            id, 
-            timestamp
+            id INTEGER NOT NULL, 
+            timestamp INTEGER NOT NULL PRIMARY KEY
         );
   ";
   let initial_connection_result : Result<(), sqlite::Error> = connection.execute(init);
@@ -88,60 +87,62 @@ fn main() {
         println!("No ports available. Generating fake data.");
     }
   }
-  /* 
-  if port_result.is_ok() {
-    port = port_result.unwrap();
-    println!("port val: {:?}", port);
-    real_data = true;
-    // My only concern is that the serial port should queue data, if not big bruh moment
-  } else {
-    println!("No ports available. Generating fake data.");
-  }
-  println!("entering loop");
-  */
+
   loop {
-    let temp: Vec<Vec<f32>>;
+    let payload: Vec<Vec<f32>>;
     if let Some(ref mut port) = port {
-      if port.bytes_to_read().unwrap() > 21 {
-        println!("reading");
+      if !TESTING {
+        //println!("reading");
         let read : Result<usize, io::Error> = port.read(&mut serial_buf);
-        println!("past read");
+        //println!("past read");
         if read.is_ok() {
-          temp = decode(serial_buf.clone());
-          println!("past decode");
-          println!("buffer value: {serial_buf:?}");
+          payload = decode(serial_buf.clone());
+          //println!("past decode");
+          //println!("payload value: {payload:?}");
         } else {
           println!("error: {:?}", read.err());
           continue;
         }
       } else {
         // In the event that the read is longer than expected i.e it is wrong and invalid
-        println!("Current read from port is not valid, too long");
+        //println!("Current read from port is not valid, too long");
         continue;
       }
     } else {
-      temp = generate_fake_data();
+      payload = generate_fake_data();
       thread::sleep(Duration::from_millis(4000));
     };
-    prev = write_db(temp, prev, &connection);
+    prev = write_db(payload, prev, &connection);
   }
 }
 
-fn write_db(temp: Vec<Vec<f32>>, mut prev : Vec<Vec<f32>>, connection : &sqlite::Connection) -> Vec<Vec<f32>>{
-  if temp[0][1] != prev[0][1]{
-    prev[0] = temp[0].clone();
-    let imu : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO imu VALUES (1, {}, {}, {}, {}, {}, {}, {});", temp[0][1], temp[0][2], temp[0][3], temp[0][4], temp[0][5], temp[0][6], temp[0][7]));
-    print!("imu packet sent: {} ", imu.is_ok());
+fn write_db(payload: Vec<Vec<f32>>, mut prev : Vec<Vec<f32>>, connection : &sqlite::Connection) -> Vec<Vec<f32>>{
+  if payload[0][1] != prev[0][1]{
+    prev[0] = payload[0].clone();
+    let imu : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO imu VALUES (1, {}, {}, {}, {}, {}, {}, {});", payload[0][1], payload[0][2], payload[0][3], payload[0][4], payload[0][5], payload[0][6], payload[0][7]));
+    if imu.is_ok(){
+      print!("imu packet recived,\t");
+    } else {
+      print!("imu packet err: {:?},\t", imu.err().unwrap().to_string());
+    }
   } 
-  if temp[1][1] != prev[1][1]{
-    prev[1] = temp[1].clone();
-    let wheel : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO wheel VALUES (2, {}, {}, {}, {}, {}, {}, {},{}, {}, {}, {}, {}, {});", temp[1][1], temp[1][2], temp[1][3], temp[1][4], temp[1][5], temp[1][6], temp[1][7], temp[1][8], temp[1][9], temp[1][10], temp[1][11], temp[1][12], temp[1][13]));
-    print!("wheel packet sent: {} ", wheel.is_ok());
+  if payload[1][1] != prev[1][1]{
+    prev[1] = payload[1].clone();
+    let wheel : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO wheel VALUES (2, {}, {}, {}, {}, {}, {}, {},{}, {}, {}, {}, {}, {});", payload[1][1], payload[1][2], payload[1][3], payload[1][4], payload[1][5], payload[1][6], payload[1][7], payload[1][8], payload[1][9], payload[1][10], payload[1][11], payload[1][12], payload[1][13]));
+    if wheel.is_ok() {
+      print!("wheel packet recived,\t");
+    } else {
+      print!("wheel packet err: {:?},\t", wheel.err().unwrap().to_string());
+    }
   }
-  if temp[2][1] != prev[2][1]{
-    prev[2] = temp[2].clone();
-    let datalog : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO datalog VALUES (3, {}, {}, {}, {}, {}, {}, {},{}, {}, {});", temp[2][1], temp[2][2], temp[2][3], temp[2][4], temp[2][5], temp[2][6], temp[2][7], temp[2][8], temp[2][9], temp[2][10]));
-    println!("datalog packet sent: {} ", datalog.is_ok());
+  if payload[2][1] != prev[2][1]{
+    prev[2] = payload[2].clone();
+    let datalog : Result<(), sqlite::Error> = connection.execute(format!("INSERT INTO datalog VALUES (3, {}, {}, {}, {}, {}, {}, {},{}, {}, {});", payload[2][1], payload[2][2], payload[2][3], payload[2][4], payload[2][5], payload[2][6], payload[2][7], payload[2][8], payload[2][9], payload[2][10]));
+    if datalog.is_ok(){
+      println!("datalog packet recived");
+    } else {
+      println!("datalog err: {:?} ", datalog.err().unwrap().to_string());
+    }
   }
   return prev;
 }
@@ -193,7 +194,7 @@ fn generate_fake_data() -> Vec<Vec<f32>> {
       let mut packet = Vec::new();
       print!("New packet: [");
       for _ in 0..14 {
-          let value = rng.gen::<f32>();
+          let value = (rng.gen::<f32>() * 100.0).round();
           packet.push(value);
           print!("{:.2} ", value);
       }
@@ -208,32 +209,42 @@ fn decode(buf : Vec<u8>) -> Vec<Vec<f32>>{
   let mut vec_index: usize = 0;
   let mut index: usize = 0;
   let mut decimal: bool = false;
-  let mut decimal_counter = 0;
-  
+  let mut negitive: bool = false;
+  let mut decimal_counter: u32 = 0;
+  //println!("{:?}", buf);
   for i in buf{
     if i as char == '\n'{
       index = 0;
       decimal = false;
+      negitive = false;
       decimal_counter = 0;
 
       vec_index += 1;
       if vec_index == PACKET_COUNT{
         break;
       }
+    } else if i as char == '-'{
+        negitive = true;
     } else if i as char == '.' {
         decimal = true;
     }  else if i as char == ',' {
-        final_vec[vec_index][index] /= max(1, decimal_counter * 10) as f32;
+        final_vec[vec_index][index] /= (10 as i32).pow(decimal_counter) as f32;
+        if negitive{
+          final_vec[vec_index][index] *= -1.0;
+        }
+        decimal = false;
+        decimal_counter = 0;
+        negitive = false;
         final_vec[vec_index].push(0.0);
         index += 1;
-    }else if i.is_ascii_digit() {
+    } else if i.is_ascii_digit() {
       if decimal{
         decimal_counter += 1;
       }
       if final_vec[vec_index].len() == 0{
         final_vec[vec_index].push((i-48).into());
       } else {
-        final_vec[vec_index][index] = final_vec[vec_index][index] * 10.0 + (i as f32 - 48.0);
+        final_vec[vec_index][index] = final_vec[vec_index][index] * 10.0 + (i - 48) as f32;
       }
     }
   }
